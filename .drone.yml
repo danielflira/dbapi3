@@ -1,0 +1,24 @@
+---
+kind: pipeline
+type: drone
+name: default
+
+steps:
+
+- name: test python3.5
+  image: python:3.5-slim
+  commands:
+  - pip3 install pytest
+  - python3 -m pytest test.py
+  
+- name: test python2.7
+  image: python:2.7-slim
+  commands:
+  - pip install pytest
+  - python2 -m pytest test.py
+
+- name: test pypy3.6
+  image: pypy:3.6-slim
+  commands:
+  - pip3 install pytest
+  - pypy3 -m pytest test.py
