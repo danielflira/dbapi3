@@ -20,4 +20,7 @@ except db.d.ProgrammingError as e:
 for row in db.execute('select * from test'):
     print(row)
 
+for row in db.execute('select * from test').as_dict():
+    print(row)
+
 db.c.close()
