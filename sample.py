@@ -3,7 +3,7 @@
 import sqlite3
 import logging
 
-from database import Database
+from dbapi3 import Database
 
 db = Database(sqlite3, ':memory:')
 

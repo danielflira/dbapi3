@@ -1,6 +1,6 @@
 import sqlite3
 import pytest
-from database import Database
+from dbapi3 import Database
 
 def test_connection():
     db = Database(sqlite3, ':memory:')

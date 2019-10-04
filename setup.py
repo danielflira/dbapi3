@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='database',
+    name='dbapi3',
     description='Database driver abstraction',
-    py_modules=['database']
+    py_modules=['dbapi3']
 )
