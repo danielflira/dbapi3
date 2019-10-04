@@ -5,7 +5,7 @@ class Wrap:
     '''
     Redirect object attr access to original
     '''
-    
+
     def __init__(self, other):
         self.other = other
 
@@ -28,7 +28,7 @@ class Cursor(Wrap):
         '''
         Return row with column names
         '''
-        
+
         headers = [i[0] for i in self.description]
         for row in self:
             yield dict(zip(headers, row))
@@ -47,10 +47,10 @@ class Database:
     '''
     Connects to a database through given driver.
 
-    Receives driver and driver's attributes, create new connections 
+    Receives driver and driver's attributes, create new connections
     through driver and expose driver as d attribute
     '''
-    
+
     def __init__(self, driver, *args, **kwargs):
         self.d = Wrap(driver)
         self.args = args
@@ -63,11 +63,11 @@ class Database:
     def execute(self, statement, *args, **kwargs):
         '''
         Same interface as dbapi-2 execute, receive an statement and parameters,
-        as return gives a "soft" cursor. 
+        as return gives a "soft" cursor.
 
         For more info: https://www.python.org/dev/peps/pep-0249/#id15
         '''
-        
+
         cursor = Cursor(self.c.cursor())
         cursor.execute(statement, *args, **kwargs)
         cursor.c = self.c
@@ -80,9 +80,41 @@ class Database:
 
         For mor info: https://www.python.org/dev/peps/pep-0249/#executemany
         '''
-        
+
         cursor = Cursor(self.c.cursor())
         cursor.executemany(statement, *args, **kwargs)
         cursor.c = self.c
         return cursor
 
+    def migrate(self, migrations):
+        try:
+            self.execute('''
+                CREATE TABLE dbapi3_version(
+                    version INTEGER not null,
+                    description VARCHAR(100) not null)
+            ''').c.commit()
+        except:
+            pass
+
+        for r in self.execute('''SELECT MAX(version) FROM dbapi3_version''').as_dict():
+            version = r['MAX(version)']
+
+        for m in migrations:
+            if version != None and m.version <= version:
+                continue
+
+            m.function(self, m.description)
+
+            self.execute('''
+                INSERT INTO dbapi3_version VALUES (?, ?)
+            ''', (
+                m.version, 
+                m.description,
+            )).c.commit()
+
+
+class Migration:
+    def __init__(self, version, function, description):
+        self.version = version
+        self.function = function
+        self.description = description
