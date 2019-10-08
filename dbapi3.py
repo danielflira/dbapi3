@@ -90,6 +90,7 @@ class Database:
         try:
             self.execute('''
                 CREATE TABLE dbapi3_version(
+                    namespace VARCHAR(25) not null,
                     version INTEGER not null,
                     description VARCHAR(100) not null)
             ''').c.commit()
@@ -106,15 +107,17 @@ class Database:
             m.function(self, m.description)
 
             self.execute('''
-                INSERT INTO dbapi3_version VALUES (?, ?)
+                INSERT INTO dbapi3_version VALUES (?, ?, ?)
             ''', (
+                m.namespace,
                 m.version, 
                 m.description,
             )).c.commit()
 
 
 class Migration:
-    def __init__(self, version, function, description):
+    def __init__(self, namespace, version, function, description):
+        self.namespace = namespace
         self.version = version
         self.function = function
         self.description = description

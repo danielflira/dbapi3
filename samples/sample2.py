@@ -36,8 +36,8 @@ def migration_v2(dbx, description):
 
 
 migrations = [
-    Migration(1, migration_v1, "Criacao das tabelas"),
-    Migration(2, migration_v2, "Insercao dos dados"),
+    Migration('sample2', 1, migration_v1, "Criacao das tabelas"),
+    Migration('sample2', 2, migration_v2, "Insercao dos dados"),
 ]
 
 db.migrate(migrations)
