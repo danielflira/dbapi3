@@ -89,7 +89,7 @@ class Database:
     def migrate(self, migrations):
         try:
             self.execute('''
-                CREATE TABLE dbapi3_version(
+                CREATE TABLE dbapi3_migration(
                     namespace VARCHAR(25) not null,
                     version INTEGER not null,
                     description VARCHAR(100) not null)
@@ -97,7 +97,7 @@ class Database:
         except:
             pass
 
-        for r in self.execute('''SELECT MAX(version) FROM dbapi3_version''').as_dict():
+        for r in self.execute('''SELECT MAX(version) FROM dbapi3_migration''').as_dict():
             version = r['MAX(version)']
 
         for m in migrations:
@@ -107,7 +107,7 @@ class Database:
             m.function(self, m.description)
 
             self.execute('''
-                INSERT INTO dbapi3_version VALUES (?, ?, ?)
+                INSERT INTO dbapi3_migration VALUES (?, ?, ?)
             ''', (
                 m.namespace,
                 m.version, 
