@@ -5,7 +5,7 @@ import logging
 
 from dbapi3 import Database, Migration
 
-db = Database(sqlite3, 'sample2.db')
+db = Database(sqlite3, ':memory:')
 
 
 def migration_v1(dbx, description):
@@ -41,6 +41,7 @@ migrations = [
 ]
 
 db.migrate(migrations)
+db.migrate(migrations) # do nothing
 
 for row in db.execute('SELECT * FROM person'):
     print(row)
