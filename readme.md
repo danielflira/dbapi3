@@ -1,39 +1,59 @@
-# database
+# dbapi3
 
-dbapi-2 helper library
+Adds some facilities to use pure dbapi2, and a simple database migration system
 
-# Using
+## Getting Started
 
-Consider de following code where some table is created, inserted and selected.
+Just create an database object instance and send commands to database :)
 
-```
-from database import Database
+```python3
+# Import the module and used driver
+from dbapi3 import Database
 import sqlite3
-import logging
 
-db = Database(sqlite3, 'database.db')
+# Create an new database connection
+db = Database(sqlite3, 'my.db')
 
+# Just execute some statement
 try:
-    db.execute('''CREATE TABLE person (name VARCHAR(100))).c.commit()
+	db.execute('create table person(name varchar(100))').c.commit()
 except db.d.ProgrammingError as e:
-    logging.warn(e)
+	print(e)
 
-try:
-    db.execute('''INSERT INTO person VALUES(?)''', ('yourname',)).c.commit()
-except db.d.ProgrammingError as e:
-    loggin.warn(e)
-
-for row in db.execute('''SELECT * FROM person'''):
-    print(row)
+# db has a reference to driver used to create connection
+# execute return a cursor with a reference to connection
 ```
 
-To change my RDBMS once my SQL instructions work on another, just change
+### Prerequisites
 
+- python2.7
+- python3.5
+- pypy3.5
+
+### Installing
+
+To install just use repository and pip
+
+```bash
+# pip3 install https://github.com/danielflira/dbapi3.git
+
+or
+
+# pip3 install https://github.com/danielflira/dbapi3/archive/master.zip
 ```
-from database import Database
-import pypyodbc
 
-db - Database(pypyodbc, 'Driver={PotsgreSQL ANS}...')
+## Running the tests
+
+To run test you must use drone.io you can run locally with
+
+```bash
+# drone exec
 ```
 
-Two main attributes on Database instance is d for driver use to connect and c to connection associated with cursor returned by execute*. This way you can access all components from an database instruction on a simple way.
+## Authors
+
+* **Daniel Lira** - *Initial work* - [dbapi3h](https://github.com/danielflira/dbapi3)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
