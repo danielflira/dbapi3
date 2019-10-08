@@ -97,10 +97,18 @@ class Database:
         except:
             pass
 
-        for r in self.execute('''SELECT MAX(version) FROM dbapi3_migration''').as_dict():
-            version = r['MAX(version)']
-
         for m in migrations:
+
+            r = self.execute('''
+                SELECT MAX(version)
+                FROM dbapi3_migration
+                WHERE 1=1
+                    AND namespace = ?
+            ''', (m.namespace,))
+
+            for row in r.as_dict():
+                version = row['MAX(version)']
+
             if version != None and m.version <= version:
                 continue
 
