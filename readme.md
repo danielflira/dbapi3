@@ -36,9 +36,7 @@ To install just use repository and pip
 
 ```bash
 # pip3 install https://github.com/danielflira/dbapi3.git
-
 or
-
 # pip3 install https://github.com/danielflira/dbapi3/archive/master.zip
 ```
 
