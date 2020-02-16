@@ -60,6 +60,94 @@ class Database:
     def _connect(self):
         self.c = Connection(self.d.connect(*self.args, **self.kwargs))
 
+    def _normalize(self, statement, args=None, kwargs=None):
+        if args == None:
+            args = []
+
+        if kwargs == None:
+            kwargs = {}
+
+        if self.d.paramstyle == 'qmark':
+            return statement, args
+
+        elif self.d.paramstyle == 'numeric':
+            nstatement = ''
+            place = 1
+
+            for i, c in enumerate(statement):
+                if c == '?' and statement[i-1] != '\\':
+                    nstatement += ':' + str(place)
+                    place += 1
+                else:
+                    nstatement += c
+
+            return nstatement, args
+
+        elif self.d.paramstyle == 'named':
+            nstatement = ''
+            nparams = {}
+            name = 'a'
+            place = 1
+
+            for i, c in enumerate(statement):
+                if c == '?' and statement[i-1] != '\\':
+                    nstatement += ':' + name
+                    nparams[name] = args[place]
+                    name += 'a'
+                    place += 1
+                else:
+                    nstatement += c
+
+            return nstatement, nparams
+
+        elif self.d.paramstyle == 'format':
+            nstatement = ''
+            place = 0
+
+            for i, c in enumerate(statement):
+                if c == '?' and statement[i-1] != '\\':
+                    t = type(params[place])
+
+                    if t == float:
+                        nstatement += '%f'
+                    elif t == int:
+                        nstatement += '%d'
+                    else:
+                        nstatement += '%s'
+
+                    place += 1
+                else:
+                    nstatement += c
+
+            return nstatement, args
+
+        elif self.d.paramstyle == 'pyformat':
+            nstatement = ''
+            nparams = {}
+            name = 'a'
+            place = 0
+
+            for i, c in enumerate(statement):
+                if c == '?' and statement[i-1] != '\\':
+                    t = type(args[place])
+
+                    # if t == float:
+                    #     nstatement += '%(' + name + ')f'
+                    # elif t == int:
+                    #     nstatement += '%(' + name + ')d'
+                    # else:
+                    #     nstatement += '%(' + name + ')s'
+
+                    nstatement += '%(' + name + ')s'
+
+                    nparams[name] = args[place]
+                    name += 'a'
+                    place += 1
+                else:
+                    nstatement += c
+
+            return nstatement, nparams
+
     def execute(self, statement, *args, **kwargs):
         '''
         Same interface as dbapi-2 execute, receive an statement and parameters,
@@ -68,8 +156,10 @@ class Database:
         For more info: https://www.python.org/dev/peps/pep-0249/#id15
         '''
 
+        statement, params = self._normalize(statement, *args, **kwargs)
+
         cursor = Cursor(self.c.cursor())
-        cursor.execute(statement, *args, **kwargs)
+        cursor.execute(statement, params)
         cursor.c = self.c
         return cursor
 
@@ -95,24 +185,26 @@ class Database:
                     description VARCHAR(100) not null)
             ''').c.commit()
         except:
-            pass
+            self.c.rollback()
 
         for m in migrations:
 
             r = self.execute('''
-                SELECT MAX(version)
+                SELECT MAX(version) as max
                 FROM dbapi3_migration
                 WHERE 1=1
                     AND namespace = ?
             ''', (m.namespace,))
 
             for row in r.as_dict():
-                version = row['MAX(version)']
+                version = row['max']
 
             if version != None and m.version <= version:
                 continue
 
-            m.function(self, m.description)
+            if m.function(self, m.description) != True:
+                self.c.rollback()
+                raise MigrationException("\"{}\" failed!".format(m.description))
 
             self.execute('''
                 INSERT INTO dbapi3_migration VALUES (?, ?, ?)
@@ -129,3 +221,7 @@ class Migration:
         self.version = version
         self.function = function
         self.description = description
+
+
+class MigrationException(Exception):
+    pass
